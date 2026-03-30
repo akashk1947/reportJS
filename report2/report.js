@@ -6,8 +6,6 @@ const {default : sessions} = require("./sessions.mjs");
 // --- CONFIGURATION ---
 const apiId = 36521355; 
 const apiHash = "e0afd99ef6508faddc6289aeca903150"; 
-
-
 // Add your post links here
 const linksToReport = links?.split("\n").map(line => line.trim()).filter(line => (line.length > 0)).map(line => {
     const split = (line.split(" "));
@@ -53,8 +51,7 @@ async function runReport() {
         try {
             await client.connect();
             const me = await client.getMe();
-            console.log(`\n[Account No.${i + 1} ${me.username || me.firstName}_${me.phone}] Connected.`);
-
+            
             // Process each message link for the current account
             for (const task of reportTasks) {
                 try {
@@ -67,7 +64,7 @@ async function runReport() {
                             message: `Please ban and remove this user account. They are selling fake experience documents, facilitating cheating in interviews, and conducting large-scale financial fraud. Immediate action is needed to protect the community and uphold platform integrity.\n\nPlease take down this account without delay.`
                         })
                     );
-                    console.log(`   ✅ Reported https://t.me/${task.username}/${task.id}`);
+                    console.log(`\n${i + 1}_${me.username || me.firstName || me.phone}__✅Reported__ https://t.me/${task.username}/${task.id}`);
 
                     // Small gap between reports on the same account
                     const randomS = (Math.floor(Math.random()*10))*1000;
@@ -81,7 +78,6 @@ async function runReport() {
             
             // Short delay between accounts to avoid flood limits
             if (i < sessions.length - 1) {
-                console.log("Waiting 3 seconds for next account...");
                 await new Promise(r => setTimeout(r, 1000));
             }
 
