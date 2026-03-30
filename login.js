@@ -1,6 +1,8 @@
-const { TelegramClient } = require("telegram");
-const { StringSession } = require("telegram/sessions");
+
+const { TelegramClient } = require("./report1/node_modules/telegram/index.js");
+const { StringSession } = require("./report1/node_modules/telegram/sessions/index.js");
 const input = require("input");
+// const { addSession } = require("./report1/addSession.js");
 
 const apiId = 36521355; // REPLACE WITH YOUR API ID
 const apiHash = "e0afd99ef6508faddc6289aeca903150"; // REPLACE WITH YOUR API HASH
@@ -17,10 +19,18 @@ const apiHash = "e0afd99ef6508faddc6289aeca903150"; // REPLACE WITH YOUR API HAS
         onError: (err) => console.log(err),
     });
 
+    const sessionString = client.session.save();
     console.log("\n--- COPY THE STRING BELOW ---");
-    console.log(client.session.save());
+    console.log(sessionString);
     console.log("--- END OF STRING ---\n");
-    
+
+    // // Automatically add the new session to sessions.mjs
+    // try {
+    //     addSession(sessionString);
+    // } catch (err) {
+    //     console.error("Failed to add session to sessions.mjs:", err.message);
+    // }
+
     await client.disconnect();
     process.exit();
 })();

@@ -1,6 +1,6 @@
-const { TelegramClient, Api, Logger } = require("telegram");
-const { StringSession } = require("telegram/sessions");
-const {default : links} = require("./links.mjs");
+const { TelegramClient, Api, Logger } = require("./report1/node_modules/telegram");
+const { StringSession } = require("./report1/node_modules/telegram/sessions");
+const {default : links} = require("./report1/links.mjs");
 const {default : sessions} = require("./sessions.mjs");
 
 // --- CONFIGURATION ---
@@ -61,18 +61,17 @@ async function runReport() {
                     const entity = await client.getEntity(task.username);
                     
                     await client.invoke(
-                            new Api.account.ReportPeer({
-                                peer: entity,
-                                reason: new Api.InputReportReasonChildAbuse(),
-                                message: `CSAM REPORT: Message ID ${task.id}`
-                            })
-                        );
-                    
-                        console.log(`   ✅ Reported https://t.me/${task.username}/${task.id}`);
+                        new Api.account.ReportPeer({
+                            peer: entity,
+                            reason: new Api.InputReportReasonFake(), // Scam or Fraud >> Fraudulent seller, product or services
+                            message: `Please ban and remove this user account. They are selling fake experience documents, facilitating cheating in interviews, and conducting large-scale financial fraud. Immediate action is needed to protect the community and uphold platform integrity.\n\nPlease take down this account without delay.`
+                        })
+                    );
+                    console.log(`   ✅ Reported https://t.me/${task.username}/${task.id}`);
 
-                        // ADD THIS: Small gap between reports on the same account
-                        const randomS = (Math.floor(Math.random()*10))*1000;
-                        await new Promise(r => setTimeout(r, randomS));
+                    // Small gap between reports on the same account
+                    const randomS = (Math.floor(Math.random()*10))*1000;
+                    await new Promise(r => setTimeout(r, randomS));
                 } catch (taskErr) {
                     console.log(`   ⚠️ Failed to report msg ${task.id}: ${taskErr.message}`);
                 }
