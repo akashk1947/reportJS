@@ -3,12 +3,11 @@ const { TelegramClient } = require("telegram");
 const { StringSession } = require("telegram/sessions");
 const input = require("input");
 const { addSession } = require("./addSession.js");
+const { api_id, api_hash } = require("./api.js");
 
-const apiId = 36521355; // REPLACE WITH YOUR API ID
-const apiHash = "e0afd99ef6508faddc6289aeca903150"; // REPLACE WITH YOUR API HASH
 
 (async () => {
-    const client = new TelegramClient(new StringSession(""), apiId, apiHash, {
+    const client = new TelegramClient(new StringSession(""), api_id, api_hash, {
         connectionRetries: 5,
     });
 
