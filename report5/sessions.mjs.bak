@@ -1,0 +1,7 @@
+// Replace this array with only the working session strings.
+const sessions = [
+    // ...existing code...
+    // Add only the session strings for accounts that successfully reported at least one post.
+];
+
+export default sessions;
