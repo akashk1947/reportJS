@@ -1,98 +1,43 @@
-const { TelegramClient, Api, Logger } = require("./report1/node_modules/telegram");
-const { StringSession } = require("./report1/node_modules/telegram/sessions");
-const {default : links} = require("./report1/links.mjs");
-const {default : sessions} = require("./sessions.mjs");
 
-// --- CONFIGURATION ---
-const apiId = 36521355; 
-const apiHash = "e0afd99ef6508faddc6289aeca903150"; 
+// Simple runner for all report.js files in report1-6 with random 5-10 min gap
+const { spawn } = require('child_process');
+const path = require('path');
 
+const REPORT_FOLDERS = ['report1', 'report2', 'report3', 'report4', 'report5', 'report6'];
+const REPORT_SCRIPT = 'report.js';
 
-// Add your post links here
-const linksToReport = links?.split("\n").map(line => line.trim()).filter(line => (line.length > 0)).map(line => {
-    const split = (line.split(" "));
-    const extractedLink = split[split.length - 1]; 
-    return extractedLink;
-});
-
-function sanitizeUsername(username) {
-    if (!username) return username;
-    
-    // More aggressive: keep only alphanumeric, underscore, and dash
-    const sanitized = username.replace(/[^a-zA-Z0-9_-]/g, '');
-    
-    // Debug: log if something was removed
-    if (username !== sanitized) {
-        console.log(`[DEBUG] Username changed from "${username}" (codes: ${[...username].map(c => c.charCodeAt(0)).join(',')}) to "${sanitized}"`);
-    }
-    
-    return sanitized;
+// Returns a random delay in milliseconds between 5 and 10 minutes
+function getRandomDelayMs() {
+    const min = 5 * 60 * 1000; // 5 minutes
+    const max = 10 * 60 * 1000; // 10 minutes
+    return Math.floor(Math.random() * (max - min + 1)) + min;
 }
 
-function parseLink(link) {
-    const cleanLink = link.replace("https://t.me/", "").replace("@", "");
-    const parts = cleanLink.split("/");
-    return {
-        username: sanitizeUsername(parts[0]),
-        id: parseInt(parts[1])
-    };
-}
+async function runReportsSequentially() {
+    for (let i = 0; i < REPORT_FOLDERS.length; i++) {
+        const folder = REPORT_FOLDERS[i];
+        const scriptPath = path.join(__dirname, folder, REPORT_SCRIPT);
+        console.log(`\n[${new Date().toLocaleTimeString()}] Running: ${scriptPath}`);
 
-async function runReport() {
-    // 1. Prepare the tasks from links
-    const reportTasks = linksToReport.map(link => parseLink(link));
-    
-    for (let i = 0; i < sessions.length; i++) {
-        const client = new TelegramClient(
-            new StringSession(sessions[i]),
-            apiId,
-            apiHash,
-            { connectionRetries: 5, useWSS: false, baseLogger: new Logger("none") }
-        );
+        await new Promise((resolve, reject) => {
+            const proc = spawn('node', [scriptPath], { stdio: 'inherit' });
+            proc.on('close', (code) => {
+                console.log(`[${folder}] exited with code ${code}`);
+                resolve();
+            });
+            proc.on('error', reject);
+        });
 
-        try {
-            await client.connect();
-            const me = await client.getMe();
-            console.log(`\n[Account No.${i + 1} ${me.username || me.firstName}_${me.phone}] Connected.`);
-
-            // Process each message link for the current account
-            for (const task of reportTasks) {
-                try {
-                    const entity = await client.getEntity(task.username);
-                    
-                    await client.invoke(
-                        new Api.account.ReportPeer({
-                            peer: entity,
-                            reason: new Api.InputReportReasonFake(), // Scam or Fraud >> Fraudulent seller, product or services
-                            message: `Please ban and remove this user account. They are selling fake experience documents, facilitating cheating in interviews, and conducting large-scale financial fraud. Immediate action is needed to protect the community and uphold platform integrity.\n\nPlease take down this account without delay.`
-                        })
-                    );
-                    console.log(`   ✅ Reported https://t.me/${task.username}/${task.id}`);
-
-                    // Small gap between reports on the same account
-                    const randomS = (Math.floor(Math.random()*10))*1000;
-                    await new Promise(r => setTimeout(r, randomS));
-                } catch (taskErr) {
-                    console.log(`   ⚠️ Failed to report msg ${task.id}: ${taskErr.message}`);
-                }
-            }
-            
-            await client.disconnect();
-            
-            // Short delay between accounts to avoid flood limits
-            if (i < sessions.length - 1) {
-                console.log("Waiting 3 seconds for next account...");
-                await new Promise(r => setTimeout(r, 1000));
-            }
-
-        } catch (e) {
-            console.log(`❌ [Account ${i + 1}] Connection Failed: ${e.message}`);
-            try { await client.disconnect(); } catch (err) {}
+        if (i < REPORT_FOLDERS.length - 1) {
+            const delay = getRandomDelayMs();
+            console.log(`Waiting ${(delay / 60000).toFixed(2)} minutes before next report...`);
+            await new Promise((r) => setTimeout(r, delay));
         }
     }
-    
-    console.log("\n--- MISSION COMPLETE: All reports processed. ---");
-    process.exit(0);
+    console.log('\nAll reports completed.');
 }
 
-runReport();
+runReportsSequentially().catch((err) => {
+    console.error('Error running reports:', err);
+    process.exit(1);
+});
